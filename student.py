@@ -145,59 +145,99 @@ def main():
     x_scaled = scaler.fit_transform(x_imputed)
 
     # Aplicar PCA
-    pca = PCA(n_components=2)
+    pca = PCA()
     x_pca = pca.fit_transform(x_scaled)
 
-    # Aplicar t-SNE
-    tsne = TSNE(n_components=2, random_state=42)
-    x_tsne = tsne.fit_transform(x_scaled)
+    # Extrair a variância explicada por cada componente principal
+    explained_variance_ratio = pca.explained_variance_ratio_
 
-    # Aplicar UMAP
-    umap_reducer = umap.UMAP(n_components=2, random_state=42)
-    x_umap = umap_reducer.fit_transform(x_scaled)
+    # Aproximar a variância explicada pelas duas primeiras componentes
+    variance_2_components = explained_variance_ratio[0] + explained_variance_ratio[1]
+    print(f"Variância explicada pelas duas primeiras componentes: {variance_2_components * 100:.2f}%")
 
-    # Aplicar PaCMAP
-    pacmap_reducer = pacmap.PaCMAP(n_components=2, random_state=42)
-    x_pacmap = pacmap_reducer.fit_transform(x_scaled)
+    # # Suponha que o PCA já tenha sido aplicado e você tenha o explained_variance_ratio_
+    cumulative_variance = np.cumsum(explained_variance_ratio)
 
-    # Visualização dos resultados
+    # Plot da variância acumulada
+    plt.figure(figsize=(8, 5))
+    plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o', linestyle='--', color='b')
+    plt.xlabel('Número de Componentes Principais')
+    plt.ylabel('Variância Acumulada')
+    plt.title('Variância Acumulada por Número de Componentes Principais')
+    plt.axhline(y=0.9, color='r', linestyle='-', label='80% da Variância Explicada')  # Linha de referência para 90% da variância explicada
+    plt.axhline(y=0.8, color='g', linestyle='-', label='90% da Variância Explicada')  # Linha de referência para 80% da variância explicada
+    plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
+    plt.grid(True)
+    plt.savefig("PCA_variancia_PCs_1.png")
+    plt.show()
+    #
+    # # Encontrar o número de componentes para 80% e 90% de variância explicada
+    # num_components_80 = np.argmax(cumulative_variance >= 0.8) + 1
+    # num_components_90 = np.argmax(cumulative_variance >= 0.9) + 1
+    #
+    # print(f"Número de componentes para explicar 80% da variância: {num_components_80}")
+    # print(f"Número de componentes para explicar 90% da variância: {num_components_90}")
+
+    # # Plotar um histograma das variâncias explicadas
+    # plt.figure(figsize=(8, 5))
+    # plt.bar(range(1, len(explained_variance_ratio) + 1), explained_variance_ratio, alpha=0.7, color='b')
+    # plt.xlabel('Componentes Principais')
+    # plt.ylabel('Variância Explicada')
+    # plt.title('Variância Explicada por Cada Componente Principal')
+    # plt.xticks(range(1, len(explained_variance_ratio) + 1))
+    # plt.savefig("PCA_variancia_PCs.png")
+    # plt.show()
+
+    # # Aplicar t-SNE
+    # tsne = TSNE(n_components=2, random_state=42)
+    # x_tsne = tsne.fit_transform(x_scaled)
+    #
+    # # Aplicar UMAP
+    # umap_reducer = umap.UMAP(n_components=2, random_state=42)
+    # x_umap = umap_reducer.fit_transform(x_scaled)
+    #
+    # # Aplicar PaCMAP
+    # pacmap_reducer = pacmap.PaCMAP(n_components=2, random_state=42)
+    # x_pacmap = pacmap_reducer.fit_transform(x_scaled)
+    #
+    # # Visualização dos resultados
     fig, axs = plt.subplots(2, 2, figsize=(12, 10))
-
-    # Definir o color map
+    #
+    # # Definir o color map
     color_map = data['G3'] if 'G3' in data.columns else x_pca[:, 1]
-
-    # Plot e salvamento de cada gráfico
-    # PCA plot
-    plt.figure(figsize=(6, 5))
-    sc = plt.scatter(x_pca[:, 0], x_pca[:, 1], c=color_map, cmap='viridis')
-    plt.colorbar(sc)
-    plt.title("PCA")
-    plt.savefig("PCA_plot.png")
-    plt.close()  # Fecha a figura para liberar memória
-
-    # t-SNE plot
-    plt.figure(figsize=(6, 5))
-    sc = plt.scatter(x_tsne[:, 0], x_tsne[:, 1], c=color_map, cmap='viridis')
-    plt.colorbar(sc)
-    plt.title("t-SNE")
-    plt.savefig("tSNE_plot.png")
-    plt.close()
-
-    # UMAP plot
-    plt.figure(figsize=(6, 5))
-    sc = plt.scatter(x_umap[:, 0], x_umap[:, 1], c=color_map, cmap='viridis')
-    plt.colorbar(sc)
-    plt.title("UMAP")
-    plt.savefig("UMAP_plot.png")
-    plt.close()
-
-    # PaCMAP plot
-    plt.figure(figsize=(6, 5))
-    sc = plt.scatter(x_pacmap[:, 0], x_pacmap[:, 1], c=color_map, cmap='viridis')
-    plt.colorbar(sc)
-    plt.title("PaCMAP")
-    plt.savefig("PaCMAP_plot.png")
-    plt.close()
+    #
+    # # Plot e salvamento de cada gráfico
+    # # PCA plot
+    # plt.figure(figsize=(6, 5))
+    # sc = plt.scatter(x_pca[:, 0], x_pca[:, 1], c=color_map, cmap='viridis')
+    # plt.colorbar(sc)
+    # plt.title("PCA")
+    # plt.savefig("PCA_plot_2pcs.png")
+    # plt.close()
+    #
+    # # t-SNE plot
+    # plt.figure(figsize=(6, 5))
+    # sc = plt.scatter(x_tsne[:, 0], x_tsne[:, 1], c=color_map, cmap='viridis')
+    # plt.colorbar(sc)
+    # plt.title("t-SNE")
+    # plt.savefig("tSNE_plot.png")
+    # plt.close()
+    #
+    # # UMAP plot
+    # plt.figure(figsize=(6, 5))
+    # sc = plt.scatter(x_umap[:, 0], x_umap[:, 1], c=color_map, cmap='viridis')
+    # plt.colorbar(sc)
+    # plt.title("UMAP")
+    # plt.savefig("UMAP_plot.png")
+    # plt.close()
+    #
+    # # PaCMAP plot
+    # plt.figure(figsize=(6, 5))
+    # sc = plt.scatter(x_pacmap[:, 0], x_pacmap[:, 1], c=color_map, cmap='viridis')
+    # plt.colorbar(sc)
+    # plt.title("PaCMAP")
+    # plt.savefig("PaCMAP_plot.png")
+    # plt.close()
 
 if __name__ == "__main__":
     main()
