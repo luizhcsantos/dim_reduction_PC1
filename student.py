@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import umap.umap_ as umap
 from ucimlrepo import fetch_ucirepo
+from scipy.spatial import distance_matrix
 
 
 def load_data(fetch_function, target_column='target'):
@@ -144,32 +145,37 @@ def main():
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x_imputed)
 
+    # # Visualização dos resultados
+    # fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+
+    plt.figure(figsize=(8, 6))
+
     # Aplicar PCA
     pca = PCA()
     x_pca = pca.fit_transform(x_scaled)
-
-    # Extrair a variância explicada por cada componente principal
-    explained_variance_ratio = pca.explained_variance_ratio_
-
-    # Aproximar a variância explicada pelas duas primeiras componentes
-    variance_2_components = explained_variance_ratio[0] + explained_variance_ratio[1]
-    print(f"Variância explicada pelas duas primeiras componentes: {variance_2_components * 100:.2f}%")
-
-    # # Suponha que o PCA já tenha sido aplicado e você tenha o explained_variance_ratio_
-    cumulative_variance = np.cumsum(explained_variance_ratio)
-
-    # Plot da variância acumulada
-    plt.figure(figsize=(8, 5))
-    plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o', linestyle='--', color='b')
-    plt.xlabel('Número de Componentes Principais')
-    plt.ylabel('Variância Acumulada')
-    plt.title('Variância Acumulada por Número de Componentes Principais')
-    plt.axhline(y=0.9, color='r', linestyle='-', label='80% da Variância Explicada')  # Linha de referência para 90% da variância explicada
-    plt.axhline(y=0.8, color='g', linestyle='-', label='90% da Variância Explicada')  # Linha de referência para 80% da variância explicada
-    plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
-    plt.grid(True)
-    plt.savefig("PCA_variancia_PCs_1.png")
-    plt.show()
+    #
+    # # Extrair a variância explicada por cada componente principal
+    # explained_variance_ratio = pca.explained_variance_ratio_
+    #
+    # # Aproximar a variância explicada pelas duas primeiras componentes
+    # variance_2_components = explained_variance_ratio[0] + explained_variance_ratio[1]
+    # print(f"Variância explicada pelas duas primeiras componentes: {variance_2_components * 100:.2f}%")
+    #
+    # # # Suponha que o PCA já tenha sido aplicado e você tenha o explained_variance_ratio_
+    # cumulative_variance = np.cumsum(explained_variance_ratio)
+    #
+    # # Plot da variância acumulada
+    # plt.figure(figsize=(8, 5))
+    # plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o', linestyle='--', color='b')
+    # plt.xlabel('Número de Componentes Principais')
+    # plt.ylabel('Variância Acumulada')
+    # plt.title('Variância Acumulada por Número de Componentes Principais')
+    # plt.axhline(y=0.9, color='r', linestyle='-', label='80% da Variância Explicada')  # Linha de referência para 90% da variância explicada
+    # plt.axhline(y=0.8, color='g', linestyle='-', label='90% da Variância Explicada')  # Linha de referência para 80% da variância explicada
+    # plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
+    # plt.grid(True)
+    # plt.savefig("PCA_variancia_PCs_1.png")
+    # plt.show()
     #
     # # Encontrar o número de componentes para 80% e 90% de variância explicada
     # num_components_80 = np.argmax(cumulative_variance >= 0.8) + 1
@@ -188,23 +194,9 @@ def main():
     # plt.savefig("PCA_variancia_PCs.png")
     # plt.show()
 
-    # # Aplicar t-SNE
-    # tsne = TSNE(n_components=2, random_state=42)
-    # x_tsne = tsne.fit_transform(x_scaled)
-    #
-    # # Aplicar UMAP
-    # umap_reducer = umap.UMAP(n_components=2, random_state=42)
-    # x_umap = umap_reducer.fit_transform(x_scaled)
-    #
-    # # Aplicar PaCMAP
-    # pacmap_reducer = pacmap.PaCMAP(n_components=2, random_state=42)
-    # x_pacmap = pacmap_reducer.fit_transform(x_scaled)
-    #
-    # # Visualização dos resultados
-    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
     #
     # # Definir o color map
-    color_map = data['G3'] if 'G3' in data.columns else x_pca[:, 1]
+    # color_map = data['G3'] if 'G3' in data.columns else x_pca[:, 1]
     #
     # # Plot e salvamento de cada gráfico
     # # PCA plot
@@ -214,14 +206,107 @@ def main():
     # plt.title("PCA")
     # plt.savefig("PCA_plot_2pcs.png")
     # plt.close()
+
     #
-    # # t-SNE plot
+    #
+    # Aplicar UMAP
+    # umap_reducer = umap.UMAP(n_components=2, random_state=42)
+    # x_umap = umap_reducer.fit_transform(x_scaled)
+    #
+    # # Aplicar PaCMAP
+    # pacmap_reducer = pacmap.PaCMAP(n_components=2, random_state=42)
+    # x_pacmap = pacmap_reducer.fit_transform(x_scaled)
+
+    x = data.drop(columns=['target'])  # Remova a coluna 'target' para aplicar o t-SNE nas features
+    y = data['target']  # Defina o 'target' como y
+
+
+    # Aplicar t-SNE
+    # valor apdrão para perplexidade = 30
+    tsne = TSNE(perplexity=50, random_state=42)
+    x_tsne = tsne.fit_transform(x_scaled)
+
+    # df = pd.DataFrame({
+    #     't-SNE1': x_tsne[:, 0],
+    #     't-SNE2': x_tsne[:, 1],
+    #     'PCA1': x_pca[:, 0],
+    #     'PCA2': x_pca[:, 1],
+    #     'UMAP1': x_umap[:, 0],
+    #     'UMAP2': x_umap[:, 1],
+    #     'Class': y
+    # })
+    #
+    # sns.pairplot(df, hue='Class', vars=['t-SNE1', 't-SNE2', 'PCA1', 'PCA2', 'UMAP1', 'UMAP2'])
+    # plt.suptitle("Pairplot of t-SNE, PCA, and UMAP", y=1.02)
+    # plt.savefig('tsne_pairplot.png')
+    # plt.show()
+
+    # Definir o color map
+    color_map = data['G3'] if 'G3' in data.columns else x_tsne[:, 1]
+
+    # t-SNE plot
     # plt.figure(figsize=(6, 5))
-    # sc = plt.scatter(x_tsne[:, 0], x_tsne[:, 1], c=color_map, cmap='viridis')
+    # sc = plt.scatter(x_tsne[:, 0], x_tsne[:, 1], c=color_map, cmap='Paired')
     # plt.colorbar(sc)
     # plt.title("t-SNE")
-    # plt.savefig("tSNE_plot.png")
+    # plt.savefig("tSNE_plot_perp50.png")
     # plt.close()
+
+    # Configurar a figura com subplots lado a lado
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Aplicar t-SNE com perplexidade de 50
+    tsne_50 = TSNE(n_components=2, perplexity=50, random_state=42)
+    x_tsne_50 = tsne_50.fit_transform(x_scaled)
+
+    # Primeiro subplot (perplexity=50)
+    sc_50 = axs[0].scatter(x_tsne_50[:, 0], x_tsne_50[:, 1], c=color_map, cmap='Paired', alpha=0.7)
+    axs[0].set_title("t-SNE com Perplexidade 50")
+    axs[0].set_xlabel("Dimensão 1")
+    axs[0].set_ylabel("Dimensão 2")
+    fig.colorbar(sc_50, ax=axs[0])
+
+    # Aplicar t-SNE com perplexidade de 20
+    tsne_20 = TSNE(n_components=2, perplexity=20, random_state=42)
+    x_tsne_20 = tsne_20.fit_transform(x_scaled)
+
+    # Segundo subplot (perplexity=20)
+    sc_20 = axs[1].scatter(x_tsne_20[:, 0], x_tsne_20[:, 1], c=color_map, cmap='Paired', alpha=0.7)
+    axs[1].set_title("t-SNE com Perplexidade 20")
+    axs[1].set_xlabel("Dimensão 1")
+    axs[1].set_ylabel("Dimensão 2")
+    fig.colorbar(sc_20, ax=axs[1])
+
+    # Ajustar layout e salvar a figura
+    plt.tight_layout()
+    plt.savefig("tSNE_plot_perplexity_comparison.png")
+    plt.show()
+
+    # Suponha que x_tsne seja o resultado do t-SNE em duas dimensões
+    # sns.kdeplot(x=x_tsne[:, 0], y=x_tsne[:, 1], cmap="magma", fill=True, bw_adjust=0.7)
+    # plt.xlabel("t-SNE Dimension 1")
+    # plt.ylabel("t-SNE Dimension 2")
+    # plt.title("t-SNE Density Plot")
+    # plt.savefig('tSNE_plot_densidade.png')
+    # plt.show()
+
+    # Calcula a matriz de distância e define um limite de vizinhança
+    # dist_matrix = distance_matrix(x_tsne, x_tsne)
+    # threshold = np.percentile(dist_matrix,5)  # Exemplo: manter apenas as conexões mais próximas (5% menores distâncias)
+    #
+    # plt.figure(figsize=(8, 6))
+    # for i in range(len(x_tsne)):
+    #     for j in range(i + 1, len(x_tsne)):
+    #         if dist_matrix[i, j] < threshold:
+    #             plt.plot([x_tsne[i, 0], x_tsne[j, 0]], [x_tsne[i, 1], x_tsne[j, 1]], 'k-', lw=0.2, alpha=0.5)
+    #
+    # plt.scatter(x_tsne[:, 0], x_tsne[:, 1], c='b', s=10)
+    # plt.xlabel("t-SNE Dimension 1")
+    # plt.ylabel("t-SNE Dimension 2")
+    # plt.title("t-SNE with Nearest Neighbor Connections")
+    # plt.savefig('tSNE_conexao_vizinhos_proximos.png')
+    # plt.show()
+
     #
     # # UMAP plot
     # plt.figure(figsize=(6, 5))
@@ -238,6 +323,8 @@ def main():
     # plt.title("PaCMAP")
     # plt.savefig("PaCMAP_plot.png")
     # plt.close()
+
+
 
 if __name__ == "__main__":
     main()
