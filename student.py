@@ -373,9 +373,9 @@ def main():
     # fig.colorbar(sc_100, ax=axs[2])
 
     # Ajustar layout e salvar a figura
-    plt.tight_layout()
-    plt.savefig("umap_neighbors_comp_new.png")
-    plt.show()
+    # plt.tight_layout()
+    # plt.savefig("umap_neighbors_comp_new.png")
+    # plt.show()
 
     # Aplicar PaCMAP
     # pacmap_reducer = pacmap.PaCMAP(n_components=2, random_state=42)
@@ -485,6 +485,19 @@ def main():
     #     print(f"Silhouette Score for LLE: {lle_silhouette:.2f}")
     #     print(f"Silhouette Score for Isomap: {isomap_silhouette:.2f}")
 
+
+    # Aplicar MDS
+    mds_reducer = MDS(random_state=42)
+    x_mds = mds_reducer.fit_transform(x_scaled)
+    #
+    # MDS plot
+    color_map = y['G3']
+    plt.figure(figsize=(6, 5))
+    sc = plt.scatter(x_mds[:, 0], x_mds[:, 1], c=color_map, cmap='plasma')
+    plt.colorbar(sc)
+    plt.title("MDS")
+    plt.savefig("mds_plot.png")
+    plt.close()
 
 if __name__ == "__main__":
     main()
