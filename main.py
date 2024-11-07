@@ -110,7 +110,7 @@ def apply_pca_and_plot(x_train, y_train, dataset_cod, n_components=2, labels=Non
     - labels: lista de rótulos das classes (para a legenda).
     - colors: lista de cores para as classes.
     """
-    pca = PCA(n_components=n_components)
+    pca = PCA(n_components=n_components, random_state=42)
     x_train_pca = pca.fit_transform(x_train)
 
     df_pca = pd.DataFrame(data=x_train_pca, columns=[f'PC{i + 1}' for i in range(n_components)])
@@ -138,17 +138,48 @@ def apply_pca_and_plot(x_train, y_train, dataset_cod, n_components=2, labels=Non
     ax.tick_params(axis='both', which='minor', labelsize=8)
     plt.savefig('pca_plot' + '_' + dataset_cod + '.png')
 
+    explained_variance_ratio = pca.explained_variance_ratio_
+    cumulative_variance = np.cumsum(explained_variance_ratio)
+    num_components_80 = np.argmax(cumulative_variance >= 0.8) + 1
+    num_components_90 = np.argmax(cumulative_variance >= 0.9) + 1
+
+    # print(f"Número de componentes para explicar 80% da variância: {num_components_80}")
+    # print(f"Número de componentes para explicar 90% da variância: {num_components_90}")
+    #
+    # # # Plot da variância acumulada
+    # plt.figure(figsize=(8, 5))
+    # plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o', linestyle='--', color='b')
+    # plt.xlabel('Número de Componentes Principais')
+    # plt.ylabel('Variância Acumulada')
+    # plt.title('Variância Acumulada por Número de Componentes Principais')
+    # plt.axhline(y=0.9, color='r', linestyle='-', label='80% da Variância Explicada')  # Linha de referência para 90% da variância explicada
+    # plt.axhline(y=0.8, color='g', linestyle='-', label='90% da Variância Explicada')  # Linha de referência para 80% da variância explicada
+    # plt.legend(loc='best', bbox_to_anchor=(1, 0.5))
+    # plt.grid(True)
+    # plt.savefig("PCA_variancia_PCs_1.png")
+    # plt.show()
+
+    # Plotar um histograma das variâncias explicadas
+    plt.figure(figsize=(8, 5))
+    plt.bar(range(1, len(explained_variance_ratio) + 1), explained_variance_ratio, alpha=0.7, color='b')
+    plt.xlabel('Componentes Principais')
+    plt.ylabel('Variância Explicada')
+    plt.title('Variância Explicada por Cada Componente Principal')
+    plt.xticks(range(1, len(explained_variance_ratio) + 1))
+    plt.savefig("iris_pca_variancia_PCs.png")
+    plt.show()
+
 
 def main():
     # Execução do pipeline com parâmetros genéricos
-    # id_repo = 53
-    # prefix_to_remove = 'Iris-'
-    # dataset_cod = 'Iris'
-    # labels=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+    id_repo = 53
+    prefix_to_remove = 'Iris-'
+    dataset_cod = 'Iris'
+    labels=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
 
-    id_repo = 320
-    prefix_to_remove = ''
-    dataset_cod = 'student_perf'
+    # id_repo = 320
+    # prefix_to_remove = ''
+    # dataset_cod = 'student_perf'
 
     df = load_data(fetch_function=lambda: fetch_ucirepo(id=id_repo), target_column='target')
     x_train, y_train, x_test, y_test = split_data(df, target_column='target', remove_prefix=prefix_to_remove)
@@ -157,10 +188,11 @@ def main():
     # non_numeric_columns = df_encoded.select_dtypes(exclude=[np.number]).columns
     # print("Colunas não numéricas:", non_numeric_columns)
 
-    labels = [df_encoded.columns]
 
     plot_correlation_matrix(df_encoded, 'student')
     apply_pca_and_plot(x_train, y_train, dataset_cod , labels=labels)
+
+
 
 
 if __name__ == "__main__":
